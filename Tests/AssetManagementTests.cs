@@ -101,5 +101,39 @@ namespace AssetManagementSystem.Tests
             var ex = Assert.Throws<AssetNotFoundException>(() => service.DeleteAsset(invalidAssetId));
             Assert.That(ex.Message, Does.Contain("not found"));
         }
+
+        [Test]
+        public void Test_AssetNotMaintainException_WhenLastMaintained2YearsAgo()
+        {
+            Asset asset = new Asset(
+                996,
+                "Old Printer",
+                "Electronics",
+                "OLD-PRN-996",
+                DateTime.Now.AddYears(-4),  
+                "Archive",
+                "Available",
+                999);
+
+            service.AddAsset(asset);
+
+            service.PerformMaintenance(
+                996,
+                DateTime.Now.AddYears(-3).ToString("yyyy-MM-dd"),
+                "Old repair",
+                1500);
+
+            var ex = Assert.Throws<AssetNotMaintainException>(() =>
+                service.PerformMaintenance(
+                    996,
+                    DateTime.Now.ToString("yyyy-MM-dd"),
+                    "Blocked repair",
+                    999));
+
+            Assert.That(ex.Message, Does.Contain("not maintained in last 2 years"));
+
+            CleanupAsset(996);
+        }
+
     }
 }
